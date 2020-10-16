@@ -4,7 +4,7 @@
 
 import sys
 import copy
-import time
+# import time
 
 # Running script: given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
@@ -14,14 +14,12 @@ class Sudoku(object):
         # you may add more attributes if you need
         self.puzzle = puzzle # self.puzzle is a list of lists
         self.ans = copy.deepcopy(puzzle) # self.ans is a list of lists
-        self.domain = [[set(i for i in range(1,10)) for _ in range(9)] for _ in range(9)]
+        self.domain = [[set([1, 2, 3, 4, 5, 6, 7, 8, 9]) for _ in range(9)] for _ in range(9)]
 
     def solve(self):
         # TODO: Write your code here
-        start = time.time()
         self.preprocess()
         self.backtrack_search()
-        print(time.time() - start)
         return self.puzzle
 
     # you may add more classes/functions if you think is useful
@@ -66,13 +64,6 @@ class Sudoku(object):
         else:
             return var
 
-        # var = (-1, -1)
-        # for i in range(0, 9):
-        #     for j in range(0, 9):
-        #         if self.puzzle[i][j] == 0:
-        #             return (i, j)
-        # return var
-
     def is_complete(self):
         for i in range(0, 9):
             for j in range(0, 9):
@@ -81,6 +72,9 @@ class Sudoku(object):
         return True
     
     def discard(self, value, x, y):
+        # Basically just one step forward-checking
+        # Since puzzle[x][y] is now assigned, update the domain
+        # Update domain for all tiles in same column, row, and sub-grid
         not_fail = True
         discarded = {}
         discarded[(x, y)] = self.domain[x][y]
@@ -131,7 +125,6 @@ class Sudoku(object):
                     self.domain[i][j] = discarded[(i, j)]
                 else:
                     self.domain[i][j].add(discarded[(i, j)])
-
         
         return False
 
