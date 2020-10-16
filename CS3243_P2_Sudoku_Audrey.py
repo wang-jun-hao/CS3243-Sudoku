@@ -19,10 +19,8 @@ class Sudoku(object):
     def solve(self):
         # TODO: Write your code here
         start = time.time()
-        assignment = {}
-        self.preprocess(assignment)
-        self.backtrack_search(assignment)
-        self.assign_the_assignment(assignment)
+        self.preprocess()
+        self.backtrack_search()
         print(time.time() - start)
         return self.puzzle
 
@@ -31,18 +29,10 @@ class Sudoku(object):
     # Note that our evaluation scripts only call the solve method.
     # Any other methods that you write should be used within the solve() method.
 
-    def assign_the_assignment(self, assignment):
-        for i in range(0, 9):
-            for j in range(0, 9):
-                if self.puzzle[i][j] == 0:
-                    self.puzzle[i][j] = assignment[(i, j)]
-
-
-    def preprocess(self, assignment):
+    def preprocess(self):
         for i in range(0, 9):
             for j in range(0, 9):
                 curr = self.puzzle[i][j]
-                assignment[(i, j)] = curr
                 if curr != 0:
                     self.domain[i][j] = set([curr])
                     for k in range(0, 9):
@@ -57,32 +47,57 @@ class Sudoku(object):
                             if x + translated_i != i and y + translated_j != j:
                                 self.domain[x + translated_i][y + translated_j].discard(curr)
 
-    def pick_unassigned_var(self, assignment):
+    def pick_unassigned_var(self):
         # with MRV heuristic
-        length = 9
+        length = 10
         var = ()
+        found = False
         for i in range(0, 9):
             for j in range(0, 9):
-                if assignment[(i, j)] == 0:
+                if self.puzzle[i][j] == 0:
+                    found = True
                     curr_length = len(self.domain[i][j])
-                    if curr_length <= length:
+                    if curr_length < length:
                         length = curr_length
                         var = (i, j)
-        return var
 
-    def is_complete(self, assignment):
+        if found == False:
+            return (-1, -1)
+        else:
+            return var
+
+        # var = (-1, -1)
+        # for i in range(0, 9):
+        #     for j in range(0, 9):
+        #         if self.puzzle[i][j] == 0:
+        #             return (i, j)
+        # return var
+
+    def is_complete(self):
         for i in range(0, 9):
             for j in range(0, 9):
-                if assignment[(i, j)] == 0:
+                if self.puzzle[i][j] == 0:
                     return False
         return True
-
-    def is_consistent(self, value, x, y, assignment):
+    
+    def discard(self, value, x, y):
+        not_fail = True
+        discarded = {}
+        discarded[(x, y)] = self.domain[x][y]
+        self.domain[x][y] = set([value])
         for k in range(0, 9):
-            if k != x and value == assignment[(k, y)]:
-                return False
-            if k != y and value == assignment[(x, k)]:
-                return False
+            if k != x:
+                if value in self.domain[k][y]:
+                    discarded[(k, y)] = value
+                    self.domain[k][y].discard(value)
+                    if len(self.domain[k][y]) == 0:
+                        not_fail = False
+            if k != y:
+                if value in self.domain[x][k]:
+                    discarded[(x, k)] = value
+                    self.domain[x][k].discard(value)
+                    if len(self.domain[x][k]) == 0:
+                        not_fail = False
         
         translated_x = x // 3 * 3
         translated_y = y // 3 * 3
@@ -90,56 +105,35 @@ class Sudoku(object):
             for j in range(0, 3):
                 new_x = i + translated_x
                 new_y = j + translated_y
-                if new_x != x and new_y != y and value == assignment[(new_x, new_y)]:
-                    return False
-        
-        return True
+                if new_x != x and new_y != y:
+                    if value in self.domain[new_x][new_y]:
+                        discarded[(new_x, new_y)] = value
+                        self.domain[new_x][new_y].discard(value)
+                        if len(self.domain[new_x][new_y]) == 0:
+                            not_fail = False
 
-    def backtrack_search(self, assignment):
-        if self.is_complete(assignment):
-            return True
-        x, y = self.pick_unassigned_var(assignment)
+        return (discarded, not_fail)
+
+    def backtrack_search(self):
+        x, y = self.pick_unassigned_var()
+        if x == -1:
+            return self.is_complete()
         for value in self.domain[x][y]:
-            if self.is_consistent(value, x, y, assignment):
-                assignment[(x, y)] = value
-                result = self.backtrack_search(assignment)
+            self.puzzle[x][y] = value
+            discarded, not_fail = self.discard(value, x, y)
+            if not_fail:
+                result = self.backtrack_search()
                 if result != False:
                     return result
-                assignment[(x, y)] = 0
+            self.puzzle[x][y] = 0
+            for i, j in discarded:
+                if i == x and j == y:
+                    self.domain[i][j] = discarded[(i, j)]
+                else:
+                    self.domain[i][j].add(discarded[(i, j)])
+
         
         return False
-    
-    def check_valid(self, puzzle):
-        for i in range(0, 9):
-            visited = set()
-            row = puzzle[i]
-            for j in row:
-                if j in visited:
-                    return False
-                else:
-                    visited.add(j)
-        
-        for i in range(0, 9):
-            visited = set()
-            for j in range(0, 9):
-                current = puzzle[j][i]
-                if current in visited:
-                    return False
-                else:
-                    visited.add(current)
-
-        for k in range(0, 3):
-            for l in range(0, 3):
-                visited = set()
-                for i in range(3 * k, 3 * k + 3):
-                    for j in range(3 * l, 3 * l + 3):
-                        current = puzzle[i][j]
-                        if current in visited:
-                            return False
-                        else:
-                            visited.add(current)
-        
-        return True
 
 if __name__ == "__main__":
     # STRICTLY do NOT modify the code in the main function here
