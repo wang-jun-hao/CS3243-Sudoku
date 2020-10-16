@@ -3,6 +3,7 @@
 
 import sys
 import copy
+import time
 
 # Running script: given code can be run with the command:
 # python file.py, ./path/to/init_state.txt ./output/output.txt
@@ -16,7 +17,7 @@ class Sudoku(object):
 
     def solve(self):
         # TODO: Write your code here
-        print(self.puzzle)
+        start = time.time()
         for i in range(0, 9):
             for j in range(0, 9):
                 var = (i, j)
@@ -31,7 +32,7 @@ class Sudoku(object):
         self.backtrack_search(self.puzzle)
         
         # self.ans is a list of lists
-        print(self.puzzle)
+        print(time.time() - start)
         return self.puzzle
 
     # you may add more classes/functions if you think is useful
@@ -65,13 +66,12 @@ class Sudoku(object):
                 self.inference[(x, i)].append(curr)
 
         # grid
-        for k in range(0, 3):
-            for l in range(0, 3):
-                if x >= 3 * k and x < 3 * k + 3 and y >= 3 * l and y < 3 * l + 3:
-                    for i in range(3 * k, 3 * k + 3):
-                        for j in range(3 * l, 3 * l + 3):
-                            if i != x and j != y:
-                                self.inference[(i, j)].append(curr)
+        translate_x = x // 3 * 3
+        translate_y = y // 3 * 3
+        for i in range(0, 3):
+            for j in range(0, 3):
+                if (translate_x + i) != x and (translate_y + j) != y:
+                    self.inference[(translate_x + i, translate_y + j)].append(curr)
 
 
         
@@ -93,20 +93,15 @@ class Sudoku(object):
                 self.inference[(x, i)].remove(curr)
 
         # grid
-        for k in range(0, 3):
-            for l in range(0, 3):
-                if x >= 3 * k and x < 3 * k + 3 and y >= 3 * l and y < 3 * l + 3:
-                    for i in range(3 * k, 3 * k + 3):
-                        for j in range(3 * l, 3 * l + 3):
-                            if i != x and j != y:
-                                self.inference[(i, j)].remove(curr)
+        translate_x = x // 3 * 3
+        translate_y = y // 3 * 3
+        for i in range(0, 3):
+            for j in range(0, 3):
+                if (translate_x + i) != x and (translate_y + j) != y:
+                    self.inference[(translate_x + i, translate_y + j)].remove(curr)
 
 
     def backtrack_search(self, puzzle):
-        # assign: (row, col, value)
-        if self.check_valid(puzzle):
-            return True
-
         var = ()
         found = False
         for i in range(0, 9):
@@ -139,7 +134,7 @@ class Sudoku(object):
             visited = set()
             row = puzzle[i]
             for j in row:
-                if j > 9 or j <= 0 or j in visited:
+                if j in visited:
                     return False
                 else:
                     visited.add(j)
@@ -148,7 +143,7 @@ class Sudoku(object):
             visited = set()
             for j in range(0, 9):
                 current = puzzle[j][i]
-                if current > 9 or current <= 0 or current in visited:
+                if current in visited:
                     return False
                 else:
                     visited.add(current)
@@ -159,7 +154,7 @@ class Sudoku(object):
                 for i in range(3 * k, 3 * k + 3):
                     for j in range(3 * l, 3 * l + 3):
                         current = puzzle[i][j]
-                        if current > 9 or current <= 0 or current in visited:
+                        if current in visited:
                             return False
                         else:
                             visited.add(current)
