@@ -45,6 +45,13 @@ class Sudoku(object):
                 return False
         return True
 
+    def computeDomain(self, puzzle, var):
+        domain = []
+        for i in range(1, 10):
+            if i not in self.inference[var]:
+                domain.append(i)
+        return domain
+
     def forward_check(self, puzzle, var):
         x = var[0]
         y = var[1]
